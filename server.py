@@ -7,6 +7,7 @@ import struct
 import time
 from filecmp import dircmp
 
+# ФУНКЦИИ СЛАВЫ
 class TreeNode:
     def __init__(self, value):
         self.value = value
