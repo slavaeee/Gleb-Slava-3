@@ -4,6 +4,8 @@ import json
 import xml.etree.ElementTree as ET
 import socket
 import struct
+import time
+from filecmp import dircmp
 
 class TreeNode:
     def __init__(self, value):
@@ -136,8 +138,99 @@ def main():
             except FileNotFoundError:
                 conn.send(b"File not found")
             conn.close()
+            
+# ФУНКЦИИ ГЛЕБА            
+#копирует файл из src в dst
+def copy_file(src_file, dst_file):
+    try:
+        with open(src_file, 'rb') as src, open(dst_file, 'wb') as dst:
+            dst.write(src.read())
+    except IOError as e:
+        print(f"Ошибка копирования {src_file} в {dst_file}: {e}")
+
+#копирую директории
+def copy_directory(src_dir, dst_dir):
+    os.makedirs(dst_dir, exist_ok=True)
+    for item in os.listdir(src_dir):
+        src_item = os.path.join(src_dir, item)
+        dst_item = os.path.join(dst_dir, item)
+        if os.path.isdir(src_item):
+            copy_directory(src_item, dst_item)
+        else:
+            copy_file(src_item, dst_item)
+            
+#удаление файлов из директории
+def delete_file(file_path):
+    if os.path.isdir(file_path):
+        for item in os.listdir(file_path):
+            delete_file(os.path.join(file_path, item))
+        os.rmdir(file_path)
+    else:
+        os.remove(file_path)
+        
+#через сокет получает содержимое папки
+def receive_changes(sock):
+    while True:  
+        data = ''
+        while True:
+            piece = sock.recv(1024)
+            if not len(piece):
+                break
+            else:
+                data += piece 
+        if data:
+            file_data = json.loads(data.decode())
+            print(f"Received {len(file_data)} files with sizes: {file_data}")
+
+def synchronize_folders(folder1, folder2):
+    server_address = ('localhost', 10000)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(server_address)
+    sock.listen(1)
+
+    while True:
+        print("Ожидание подключения прог2")
+        conn, addr = sock.accept()
+        print("слава Богу подлючились", addr)
+
+        while True:
+            dcmp = dircmp(folder1, folder2)
+            missing_files = dcmp.left_only
+            extra_files = dcmp.right_only
+
+            for missing_file in missing_files:
+                src_file = os.path.join(folder1, missing_file)
+                dst_file = os.path.join(folder2, missing_file)
+                if os.path.isfile(src_file):
+                    copy_file(src_file, dst_file)
+                    print('Файл скопирован:', dst_file)
+                elif os.path.isdir(src_file):
+                    copy_directory(src_file, dst_file)
+                    print('Директория скопирована:', dst_file)
+
+            for extra_file in extra_files:
+                src_file = os.path.join(folder2, extra_file)
+                if os.path.isfile(src_file) or os.path.isdir(src_file):
+                    delete_file(src_file)
+                    print('Файл или директория удалены:', src_file)
+
+            time.sleep(3)  #обновдление каждые 3 сек
 
 
 
 if __name__ == "__main__":
-    main()
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind(("localhost", 12345))  # Подставьте нужный хост и порт
+    server_socket.listen(5)
+    print("Программа 1 ожидает соединений...")
+    conn, addr = server_socket.accept()
+    print(f"Установлено соединение с {addr}")
+    num_bytes = conn.recv(4)
+    num = struct.unpack("!i", num_bytes)[0]
+    conn.close()
+    if num == 1:
+        main()
+    elif num == 2:
+        folder1 = input("Пропишите путь к первой директории: ")
+        folder2 = input("Пропишите путь к второй директории: ")
+        synchronize_folders(folder1, folder2)
