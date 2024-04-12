@@ -43,30 +43,28 @@ def receive_changes(sock):
 if __name__ == "__main__":
     income = int(input('Введите 1(Слава), введите 2(Глеб)'))
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect(("localhost", 12345))  # Подставьте нужный хост и порт программы 1
-            sock.sendall(struct.pack("!i", income))
-            sock.shutdown(socket.SHUT_WR)
+        sock.connect(("localhost", 12345))  # Подставьте нужный хост и порт программы 1
+        sock.sendall(struct.pack("!i", income))
     if income == 1:
         while True:
             income = int(input('Введите 1, чтобы создать дерево, введите 2, чтобы получить файл: '))
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.connect(("localhost", 12345))  # Подставьте нужный хост и порт программы 1
+                sock.sendall(struct.pack("!i", income))
             if income == 1:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                    sock.connect(("localhost", 12345))  # Подставьте нужный хост и порт программы 1
-                    sock.sendall(struct.pack("!i", income))
-                    sock.shutdown(socket.SHUT_WR)
-                    # numbers = [1, 2, 3, 4, 5]  # Пример чисел для отправки
-                    numbers = []
-                    while True:
-                        income = input('Введите число, когда закончите, введите \'stop\': ')
-                        if income == 'stop':
-                            break
-                        try:
-                            int(income)
-                        except ValueError:
-                            print('Введено неправильное значение')
-                            continue
-                        else:
-                            numbers.append(int(income))
+                numbers = [1, 2, 3, 4, 5]  # Пример чисел для отправки
+                # numbers = []
+                while True:
+                    income = input('Введите число, когда закончите, введите \'stop\': ')
+                    if income == 'stop':
+                        break
+                    try:
+                        int(income)
+                    except ValueError:
+                        print('Введено неправильное значение')
+                        continue
+                    else:
+                        numbers.append(int(income))
                 send_numbers(numbers)
             elif income == 2:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -89,6 +87,7 @@ if __name__ == "__main__":
                         print("Файл успешно получен от сервера")
                     sock.shutdown(socket.SHUT_WR)
     elif income == 2:
+
         folder1 = input("Введите путь к первой папке: ")
         
         # Установить сокетное соединение с программой 1

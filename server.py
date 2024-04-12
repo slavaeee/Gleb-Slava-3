@@ -228,6 +228,7 @@ if __name__ == "__main__":
     print(f"Установлено соединение с {addr}")
     num_bytes = conn.recv(4)
     num = struct.unpack("!i", num_bytes)[0]
+    print(num)
     conn.close()
     if num == 1:
         main()
