@@ -42,11 +42,11 @@ def receive_changes(sock):
 
 if __name__ == "__main__":
     income = int(input('Введите 1(Слава), введите 2(Глеб)'))
-    if income == 1:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect(("localhost", 12345))  # Подставьте нужный хост и порт программы 1
             sock.sendall(struct.pack("!i", income))
             sock.shutdown(socket.SHUT_WR)
+    if income == 1:
         while True:
             income = int(input('Введите 1, чтобы создать дерево, введите 2, чтобы получить файл: '))
             if income == 1:
@@ -70,11 +70,6 @@ if __name__ == "__main__":
                 send_numbers(numbers)
             elif income == 2:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                    sock.connect(('localhost', 12345))
-                    sock.sendall(struct.pack("!i", income))
-                    sock.shutdown(socket.SHUT_WR)
-                    
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                     sock.connect(("localhost", 12345)) 
                     filename = input("Введите имя файла для отправки: ")
                     sock.sendall(filename.encode())
@@ -94,11 +89,6 @@ if __name__ == "__main__":
                         print("Файл успешно получен от сервера")
                     sock.shutdown(socket.SHUT_WR)
     elif income == 2:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect(("localhost", 12345))  # Подставьте нужный хост и порт программы 1
-            sock.sendall(struct.pack("!i", income))
-            sock.shutdown(socket.SHUT_WR)
-            
         folder1 = input("Введите путь к первой папке: ")
         
         # Установить сокетное соединение с программой 1
