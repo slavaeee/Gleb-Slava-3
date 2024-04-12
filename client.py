@@ -5,14 +5,12 @@ import socket
 import struct
 
 # ФУНКЦИЯ СЛАВЫ
-def send_numbers(numbers):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.connect(("localhost", 12345))  # Подставьте нужный хост и порт программы 1
-        for num in numbers:
-            num_bytes = struct.pack("!i", num)  # Упаковываем число в байты
-            sock.sendall(num_bytes)
-        sock.shutdown(socket.SHUT_WR)  # Закрываем запись на сокете
-        print("Дерево создано")
+def send_numbers(numbers, sock):
+    for num in numbers:
+        num_bytes = struct.pack("!i", num)  # Упаковываем число в байты
+        sock.sendall(num_bytes)
+    sock.shutdown(socket.SHUT_WR)  # Закрываем запись на сокете
+    print("Дерево создано")
         
 # ФУНКЦИИ ГЛЕБА
 def pack_data(data):
@@ -42,15 +40,13 @@ def receive_changes(sock):
 
 if __name__ == "__main__":
     income = int(input('Введите 1(Слава), введите 2(Глеб)'))
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.connect(("localhost", 12345))  # Подставьте нужный хост и порт программы 1
-        sock.sendall(struct.pack("!i", income))
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect(("localhost", 12345))  # Подставьте нужный хост и порт программы 1
+    sock.sendall(struct.pack("!i", income))
     if income == 1:
         while True:
             income = int(input('Введите 1, чтобы создать дерево, введите 2, чтобы получить файл: '))
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.connect(("localhost", 12345))  # Подставьте нужный хост и порт программы 1
-                sock.sendall(struct.pack("!i", income))
+            sock.sendall(struct.pack("!i", income))
             if income == 1:
                 numbers = [1, 2, 3, 4, 5]  # Пример чисел для отправки
                 # numbers = []
@@ -65,43 +61,30 @@ if __name__ == "__main__":
                         continue
                     else:
                         numbers.append(int(income))
-                send_numbers(numbers)
+                send_numbers(numbers, sock)
             elif income == 2:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                    sock.connect(("localhost", 12345)) 
-                    filename = input("Введите имя файла для отправки: ")
-                    sock.sendall(filename.encode())
+                filename = input("Введите имя файла для отправки: ")
+                sock.sendall(filename.encode())
 
-                    data = b''
-                    while True:
-                        piece = sock.recv(1024)
-                        if not piece:
-                            break
-                        data += piece
+                data = b''
+                while True:
+                    piece = sock.recv(1024)
+                    if not piece:
+                        break
+                    data += piece
 
-                    if data == b"File not found":
-                        print("Файл не найден на сервере")
-                    else:
-                        with open(filename, 'wb') as file:
-                            file.write(data)
-                        print("Файл успешно получен от сервера")
-                    sock.shutdown(socket.SHUT_WR)
+                if data == b"File not found":
+                    print("Файл не найден на сервере")
+                else:
+                    with open(filename, 'wb') as file:
+                        file.write(data)
+                    print("Файл успешно получен от сервера")
+                sock.shutdown(socket.SHUT_WR)
     elif income == 2:
 
         folder1 = input("Введите путь к первой папке: ")
         
         # Установить сокетное соединение с программой 1
-        server_address = ('localhost', 10000)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        
-        connected = False
-        while not connected:
-            try:
-                sock.connect(server_address)
-                connected = True
-            except ConnectionRefusedError:
-                print("Не удалось установить соединение. Повторная попытка через 10 секунд...")
-                time.sleep(10)
 
         while True:
             def get_directory_structure(folder):

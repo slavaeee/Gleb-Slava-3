@@ -93,27 +93,19 @@ def handle_client(conn, addr, root, folder_path):
     print(f"Соединение с {addr} закрыто.")
     return root
 
-def main():
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(("localhost", 12345))  # Подставьте нужный хост и порт
-    server_socket.listen(5)
+def main(conn, addr):
     
     while True:
-        print("Программа 1 ожидает соединений...")
-        conn, addr = server_socket.accept()
-        print(f"Установлено соединение с {addr}")
         num_bytes = conn.recv(4)
         num = struct.unpack("!i", num_bytes)[0]
         if num == 1:
             folder_path = create_folder()
             root = None
-            conn, addr = server_socket.accept()
             root = handle_client(conn, addr, root, folder_path)
             # После обработки клиента можно сохранить дерево в файлы
             save_json(root, folder_path)
         else:
-            conn, addr = server_socket.accept()
-            print("Подключение установлено с", addr)
+            
 
             # dir = b''
             # while True:
@@ -183,10 +175,7 @@ def receive_changes(sock):
             file_data = json.loads(data.decode())
             print(f"Received {len(file_data)} files with sizes: {file_data}")
 
-def synchronize_folders(folder1, folder2):
-    server_address = ('localhost', 10000)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(server_address)
+def synchronize_folders(folder1, folder2, sock):
     sock.listen(1)
 
     while True:
@@ -229,10 +218,9 @@ if __name__ == "__main__":
     num_bytes = conn.recv(4)
     num = struct.unpack("!i", num_bytes)[0]
     print(num)
-    conn.close()
     if num == 1:
-        main()
+        main(conn, addr)
     elif num == 2:
         folder1 = input("Пропишите путь к первой директории: ")
         folder2 = input("Пропишите путь к второй директории: ")
-        synchronize_folders(folder1, folder2)
+        synchronize_folders(folder1, folder2, server_socket)
